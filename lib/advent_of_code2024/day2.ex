@@ -1,4 +1,5 @@
 defmodule AdventOfCode2024.Day2 do
+  @moduledoc false
   def solve(input, part: 1) do
     reports = parse(input)
 

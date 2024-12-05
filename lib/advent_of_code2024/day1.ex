@@ -1,8 +1,11 @@
 defmodule AdventOfCode2024.Day1 do
+  @moduledoc false
   def solve(input, part: 1) do
     {left, right} = parse(input)
 
-    Enum.zip(Enum.sort(left), Enum.sort(right))
+    left
+    |> Enum.sort()
+    |> Enum.zip(Enum.sort(right))
     |> Enum.reduce(0, fn {l, r}, acc ->
       acc + abs(r - l)
     end)

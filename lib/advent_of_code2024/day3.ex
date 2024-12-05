@@ -1,4 +1,5 @@
 defmodule AdventOfCode2024.Day3 do
+  @moduledoc false
   def solve(input, part: part) do
     operations =
       ~r/mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)/

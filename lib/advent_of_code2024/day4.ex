@@ -1,4 +1,5 @@
 defmodule AdventOfCode2024.Day4 do
+  @moduledoc false
   def solve(input, part: 1) do
     matrix = parse(input)
 
@@ -23,8 +24,7 @@ defmodule AdventOfCode2024.Day4 do
     matrix = parse(input)
 
     directions =
-      [{-1, -1}, {-1, 1}, {1, 1}, {1, -1}]
-      |> then(fn directions ->
+      then([{-1, -1}, {-1, 1}, {1, 1}, {1, -1}], fn directions ->
         Enum.zip([
           directions,
           Enum.slice(directions, 1..(length(directions) - 1)) ++
@@ -52,7 +52,7 @@ defmodule AdventOfCode2024.Day4 do
   end
 
   defp parse(input) do
-    matrix = String.split(input, "\n", trim: true) |> Enum.map(&String.graphemes/1)
+    matrix = input |> String.split("\n", trim: true) |> Enum.map(&String.graphemes/1)
 
     for {row, i} <- Enum.with_index(matrix), reduce: %{} do
       acc ->
