@@ -25,7 +25,7 @@ defmodule AdventOfCode2024.Day6 do
     end
   end
 
-  def traverse(matrix, {start_y, start_x}) do
+  defp traverse(matrix, {start_y, start_x}) do
     0
     |> Stream.iterate(&(&1 + 1))
     |> Enum.reduce_while({matrix, {start_y, start_x}, MapSet.new()}, fn _, {matrix, {y, x}, visited} ->
