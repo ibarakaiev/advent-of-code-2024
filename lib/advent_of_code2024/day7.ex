@@ -14,8 +14,15 @@ defmodule AdventOfCode2024.Day7 do
 
   defp eval(acc, [number | rest], value, [allow_concat?: allow_concat?] = opts) do
     eval(acc * number, rest, value, opts) or eval(acc + number, rest, value, opts) or
-      if(allow_concat?, do: eval(String.to_integer("#{acc}#{number}"), rest, value, opts), else: false)
+      if(allow_concat?, do: eval(concat(acc, number), rest, value, opts), else: false)
   end
+
+  defp concat(a, b) do
+    shift(a, b) + b
+  end
+
+  defp shift(a, 0), do: a
+  defp shift(a, b), do: shift(a * 10, div(b, 10))
 
   defp parse(input) do
     input
