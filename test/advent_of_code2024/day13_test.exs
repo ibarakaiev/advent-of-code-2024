@@ -23,8 +23,7 @@ defmodule AdventOfCode2024.Day13Test do
     assert AdventOfCode2024.Day13.solve(@input, part: 1) == 480
   end
 
-  #
-  # test "part 2" do
-  #   assert AdventOfCode2024.Day13.solve(@input, part: 2) != 0
-  # end
+  test "part 2" do
+    assert AdventOfCode2024.Day13.solve(@input, part: 2) != 0
+  end
 end
