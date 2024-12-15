@@ -41,10 +41,13 @@ defmodule AdventOfCode2024.Day15 do
               {map, {i, j}}
 
             k ->
-              {map
-               |> Map.put({i, j}, ".")
-               |> Map.put({i + d_i, j + d_j}, "@")
-               |> Map.put({i + k * d_i, j + k * d_j}, "O"), {i + d_i, j + d_j}}
+              updated_map =
+                map
+                |> Map.put({i, j}, ".")
+                |> Map.put({i + d_i, j + d_j}, "@")
+                |> Map.put({i + k * d_i, j + k * d_j}, "O")
+
+              {updated_map, {i + d_i, j + d_j}}
           end
 
         char when char == "[" or char == "]" ->
@@ -68,11 +71,14 @@ defmodule AdventOfCode2024.Day15 do
                   {map, {i, j}}
 
                 k ->
-                  {k..1//-1
-                   |> Enum.reduce(map, fn k, map ->
-                     Map.put(map, {i + k * d_i, j + k * d_j}, map[{i + (k - 1) * d_i, j + (k - 1) * d_j}])
-                   end)
-                   |> Map.put({i, j}, "."), {i + d_i, j + d_j}}
+                  updated_map =
+                    k..1//-1
+                    |> Enum.reduce(map, fn k, map ->
+                      Map.put(map, {i + k * d_i, j + k * d_j}, map[{i + (k - 1) * d_i, j + (k - 1) * d_j}])
+                    end)
+                    |> Map.put({i, j}, ".")
+
+                  {updated_map, {i + d_i, j + d_j}}
               end
 
             instruction when instruction == "^" or instruction == "v" ->
@@ -119,8 +125,6 @@ defmodule AdventOfCode2024.Day15 do
                   end
                 end)
 
-              max_k = Enum.max(Map.keys(connected_boxes))
-
               can_move? =
                 Enum.reduce_while(connected_boxes, true, fn {k, list}, _acc ->
                   can_row_move? =
@@ -140,6 +144,8 @@ defmodule AdventOfCode2024.Day15 do
                 end)
 
               if can_move? do
+                max_k = Enum.max(Map.keys(connected_boxes))
+
                 map =
                   Enum.reduce(max_k..0//-1, map, fn k, map ->
                     for {left, right} <- connected_boxes[k], reduce: map do
