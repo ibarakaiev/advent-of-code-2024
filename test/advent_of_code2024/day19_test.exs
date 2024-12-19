@@ -16,9 +16,11 @@ defmodule AdventOfCode2024.Day19Test do
 
   test "part 1" do
     assert AdventOfCode2024.Day19.solve(@input, part: 1) == 6
+    assert AdventOfCode2024.Day19Trie.solve(@input, part: 1) == 6
   end
 
   test "part 2" do
     assert AdventOfCode2024.Day19.solve(@input, part: 2) == 16
+    assert AdventOfCode2024.Day19Trie.solve(@input, part: 2) == 16
   end
 end
