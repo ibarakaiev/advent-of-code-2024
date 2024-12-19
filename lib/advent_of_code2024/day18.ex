@@ -63,7 +63,7 @@ defmodule AdventOfCode2024.Day18 do
     Enum.at(coordinates, index)
   end
 
-  def bfs(grid, {height, width}) do
+  defp bfs(grid, {height, width}) do
     queue = :queue.in({{0, 0}, 0}, :queue.new())
 
     distances =
@@ -98,7 +98,7 @@ defmodule AdventOfCode2024.Day18 do
     distances[{height, width}]
   end
 
-  def construct_grid({width, height}, coordinates) do
+  defp construct_grid({width, height}, coordinates) do
     coordinates = MapSet.new(coordinates)
 
     for i <- 0..height, reduce: Map.new() do
@@ -114,7 +114,7 @@ defmodule AdventOfCode2024.Day18 do
     end
   end
 
-  def parse(input, [{:part, part} | _] = opts) do
+  defp parse(input, [{:part, part} | _] = opts) do
     rows = String.split(input, "\n", trim: true)
 
     env = Keyword.get(opts, :env, :prod)
