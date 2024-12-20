@@ -9,15 +9,13 @@ defmodule AdventOfCode2024.Day20 do
 
     path = bfs(maze, {start_i, start_j})
 
-    path_length = map_size(path)
-
-    max_distance =
+    max_cheating_distance =
       case part do
         1 -> 2
         2 -> 20
       end
 
-    min_cheating_distance =
+    min_saved_milliseconds =
       case env do
         :test ->
           case part do
@@ -29,50 +27,25 @@ defmodule AdventOfCode2024.Day20 do
           100
       end
 
-    frequencies =
-      1
-      |> Stream.iterate(&(&1 + 1))
-      |> Enum.reduce_while({[], {start_i, start_j}}, fn _, {saved_distances, {i, j}} ->
-        case path[{i, j}] do
-          nil ->
-            {:halt, saved_distances}
+    for {current_node, i} <- Enum.with_index(path),
+        {later_node, j} <- Enum.with_index(path),
+        i < j,
+        reduce: 0 do
+      total ->
+        manhattan_distance = manhattan_distance(current_node, later_node)
 
-          {next_coordinates, current_level} ->
-            saved_distances =
-              for neighbor <- neighbors_within_distance(maze, {i, j}, max_distance), reduce: saved_distances do
-                saved_distances ->
-                  neighbor_level =
-                    case maze[neighbor] do
-                      "E" ->
-                        path_length
+        if manhattan_distance <= max_cheating_distance do
+          saved_milliseconds = j - i - manhattan_distance
 
-                      "." ->
-                        case path[neighbor] do
-                          {_neighbor_next_coordinates, neighbor_level} ->
-                            neighbor_level
-
-                          _ ->
-                            nil
-                        end
-                    end
-
-                  if neighbor_level && neighbor_level - current_level - max_distance > 0 do
-                    [neighbor_level - current_level - max_distance | saved_distances]
-                  else
-                    saved_distances
-                  end
-              end
-
-            {:cont, {saved_distances, next_coordinates}}
+          if saved_milliseconds >= min_saved_milliseconds do
+            total + 1
+          else
+            total
+          end
+        else
+          total
         end
-      end)
-      |> Enum.frequencies()
-      |> Enum.filter(fn {k, _v} -> k >= min_cheating_distance end)
-      |> Map.new()
-
-    frequencies
-    |> Enum.map(fn {_, v} -> v end)
-    |> Enum.sum()
+    end
   end
 
   defp bfs(maze, {start_i, start_j}) do
@@ -80,7 +53,7 @@ defmodule AdventOfCode2024.Day20 do
 
     1
     |> Stream.iterate(&(&1 + 1))
-    |> Enum.reduce_while({queue, MapSet.new(), %{}}, fn _, {queue, visited, path} ->
+    |> Enum.reduce_while({queue, MapSet.new(), [{start_i, start_j}]}, fn _, {queue, visited, path} ->
       case :queue.out(queue) do
         {:empty, _} ->
           {:halt, path}
@@ -92,7 +65,7 @@ defmodule AdventOfCode2024.Day20 do
             Enum.reduce([{0, 1}, {1, 0}, {0, -1}, {-1, 0}], {queue, path}, fn {d_i, d_j}, {queue, path} ->
               if (maze[{i + d_i, j + d_j}] == "." or maze[{i + d_i, j + d_j}] == "E") and
                    not MapSet.member?(visited, {i + d_i, j + d_j}) do
-                {:queue.in({{i + d_i, j + d_j}, level + 1}, queue), Map.put(path, {i, j}, {{i + d_i, j + d_j}, level})}
+                {:queue.in({{i + d_i, j + d_j}, level + 1}, queue), [{i + d_i, j + d_j} | path]}
               else
                 {queue, path}
               end
@@ -101,21 +74,11 @@ defmodule AdventOfCode2024.Day20 do
           {:cont, {queue, visited, path}}
       end
     end)
+    |> Enum.reverse()
   end
 
-  defp neighbors_within_distance(maze, {i, j}, max_distance) do
-    [{0, 1}, {1, 0}, {0, -1}, {-1, 0}]
-    |> Stream.cycle()
-    |> Stream.chunk_every(2, 1)
-    |> Stream.take(4)
-    |> Enum.flat_map(fn [{d_i_1, d_j_1}, {d_i_2, d_j_2}] ->
-      reachable_coordinates =
-        for distance <- 1..max_distance, k <- 0..(distance - 1) do
-          {i + d_i_1 * k + d_i_2 * (distance - k), j + d_j_1 * k + d_j_2 * (distance - k)}
-        end
-
-      Enum.filter(reachable_coordinates, fn {i, j} -> maze[{i, j}] == "." or maze[{i, j}] == "E" end)
-    end)
+  defp manhattan_distance({first_i, first_j}, {second_i, second_j}) do
+    abs(second_i - first_i) + abs(second_j - first_j)
   end
 
   defp parse(input) do
@@ -133,4 +96,3 @@ defmodule AdventOfCode2024.Day20 do
     {map, {length(matrix), length(List.first(matrix))}}
   end
 end
-
