@@ -21,7 +21,7 @@ defmodule AdventOfCode2024.Day17 do
     if i == length(program) + 1 do
       String.to_integer(a_binary, 2)
     else
-      0..127
+      0..7
       |> Enum.map(fn candidate ->
         candidate_binary = candidate |> Integer.to_string(2) |> String.pad_leading(3, "0")
         extended_a_binary = a_binary <> candidate_binary
