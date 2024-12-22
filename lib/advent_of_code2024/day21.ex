@@ -24,76 +24,88 @@ defmodule AdventOfCode2024.Day21 do
                       <v>
                       """)
 
-  def solve(input, part: 1) do
-    numbers = String.split(input, "\n", trim: true)
+  def solve(input, part: part) do
+    numbers = input |> String.split("\n", trim: true) |> Enum.map(&String.graphemes/1)
+
+    number_of_indirect_directional_keypads =
+      case part do
+        1 -> 2
+        2 -> 25
+      end
 
     numbers
     |> Enum.map(fn number ->
-      # keypad <- first_directional_keypad <- second_directional_keypad <- third_directional_keypad (entered manually, doesn't matter)
-      {sequence, _} =
-        number
-        |> String.graphemes()
-        |> Enum.reduce(
-          {[], {"A", "A", "A"}},
-          fn target_char, {sequence, {current_numeric_char, current_directional1_char, current_directional2_char}} ->
-            first_to_numeric_sequence = sequence_for_numeric_keypad(current_numeric_char, target_char)
+      {sequence, _} = expand_sequence(number, List.duplicate("A", number_of_indirect_directional_keypads + 1), 0)
 
-            {sequence_rest, {current_directional1_char, current_directional2_char}} =
-              Enum.reduce(
-                first_to_numeric_sequence,
-                {[], {current_directional1_char, current_directional2_char}},
-                fn target_char, {sequence, {current_directional1_char, current_directional2_char}} ->
-                  second_to_first_sequence = sequence_for_directional_keypad(current_directional1_char, target_char)
+      numeric_part = number |> Enum.reject(&(&1 == "A")) |> Enum.join() |> String.to_integer()
 
-                  {sequence_rest, current_directional2_char} =
-                    Enum.reduce(
-                      second_to_first_sequence,
-                      {[], current_directional2_char},
-                      fn target_char, {sequence, current_directional2_char} ->
-                        third_to_second = sequence_for_directional_keypad(current_directional2_char, target_char)
-
-                        {sequence ++ third_to_second, target_char}
-                      end
-                    )
-
-                  {sequence ++ sequence_rest, {target_char, current_directional2_char}}
-                end
-              )
-
-            {sequence ++ sequence_rest, {target_char, current_directional1_char, current_directional2_char}}
-          end
-        )
-
-      length(sequence) * String.to_integer(String.slice(number, 0..2))
+      sequence * numeric_part
     end)
     |> Enum.sum()
   end
 
-  defp sequence_for_numeric_keypad(starting_char, target_char) do
-    {starting_i, starting_j} = @numeric_keypad[starting_char]
-    {ending_i, ending_j} = @numeric_keypad[target_char]
+  def expand_sequence(sequence, [], _level) do
+    {Enum.count(sequence), []}
+  end
 
-    horizontal_moves = List.duplicate(if(ending_j > starting_j, do: ">", else: "<"), abs(ending_j - starting_j))
-    vertical_moves = List.duplicate(if(ending_i > starting_i, do: "v", else: "^"), abs(ending_i - starting_i))
+  def expand_sequence(sequence, current_directional_chars, level) do
+    memoized({sequence, current_directional_chars}, fn ->
+      Enum.reduce(
+        sequence,
+        {0, current_directional_chars},
+        fn target_char, {acc, [current_directional_char | rest_of_directional_chars]} ->
+          current_directional_char
+          |> sequence_for_keypad(target_char, if(level == 0, do: :numeric, else: :directional))
+          |> Enum.map(fn sequence ->
+            {expanded_next_sequence, updated_rest_of_directional_chars} =
+              expand_sequence(sequence, rest_of_directional_chars, level + 1)
 
-    if starting_i == 3 and ending_j == 0 do
-      vertical_moves ++ horizontal_moves ++ ["A"]
-    else
-      horizontal_moves ++ vertical_moves ++ ["A"]
+            {acc + expanded_next_sequence, [target_char | updated_rest_of_directional_chars]}
+          end)
+          |> Enum.min_by(fn {sequence_length, _} -> sequence_length end)
+        end
+      )
+    end)
+  end
+
+  defp memoized(key, fun) do
+    case Process.get(key) do
+      nil ->
+        result = fun.()
+
+        Process.put(key, result)
+
+        result
+
+      v ->
+        v
     end
   end
 
-  defp sequence_for_directional_keypad(starting_char, target_char) do
-    {starting_i, starting_j} = @directional_keypad[starting_char]
-    {ending_i, ending_j} = @directional_keypad[target_char]
+  defp sequence_for_keypad(starting_char, target_char, keypad_type) do
+    keypad =
+      case keypad_type do
+        :numeric -> @numeric_keypad
+        :directional -> @directional_keypad
+      end
 
-    horizontal_moves = List.duplicate(if(ending_j > starting_j, do: ">", else: "<"), abs(ending_j - starting_j))
-    vertical_moves = List.duplicate(if(ending_i > starting_i, do: "v", else: "^"), abs(ending_i - starting_i))
+    {starting_i, starting_j} = keypad[starting_char]
+    {target_i, target_j} = keypad[target_char]
 
-    if starting_i == 0 and ending_j == 0 do
-      vertical_moves ++ horizontal_moves ++ ["A"]
-    else
-      horizontal_moves ++ vertical_moves ++ ["A"]
+    horizontal_moves = List.duplicate(if(target_j > starting_j, do: ">", else: "<"), abs(target_j - starting_j))
+    vertical_moves = List.duplicate(if(target_i > starting_i, do: "v", else: "^"), abs(target_i - starting_i))
+
+    cond do
+      (keypad_type == :numeric and starting_i == 3 and target_j == 0) or
+          (keypad_type == :directional and starting_i == 0 and target_j == 0) ->
+        [vertical_moves ++ horizontal_moves ++ ["A"]]
+
+      (keypad_type == :numeric and starting_j == 0 and target_i == 3) or
+          (keypad_type == :directional and starting_j == 0 and target_i == 0) ->
+        [horizontal_moves ++ vertical_moves ++ ["A"]]
+
+      true ->
+        [horizontal_moves ++ vertical_moves ++ ["A"], vertical_moves ++ horizontal_moves ++ ["A"]]
     end
   end
 end
