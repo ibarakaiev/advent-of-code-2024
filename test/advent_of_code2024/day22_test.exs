@@ -24,8 +24,4 @@ defmodule AdventOfCode2024.Day22Test do
              part: 2
            ) == 23
   end
-
-  # test "part 2 tt" do
-  #   assert AdventOfCode2024.Day22.solve("123", part: 2) == 23
-  # end
 end
